@@ -1,6 +1,8 @@
 package org.spond.weather.service;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spond.weather.dto.TimeSeriesDto;
 import org.spond.weather.dto.WeatherDetailsDto;
 import org.spond.weather.dto.WeatherResponse;
@@ -19,6 +21,8 @@ import java.util.Comparator;
 @RequiredArgsConstructor
 public class WeatherService {
 
+    private static final Logger log = LoggerFactory.getLogger(WeatherService.class);
+
     private final String apiUrl = "https://api.met.no/weatherapi/locationforecast/2.0/compact";
 
     private final RestTemplate restTemplate;
@@ -32,7 +36,7 @@ public class WeatherService {
 
     private WeatherDetailsDto fetchWeatherDetails(double latitude, double longitude) {
 
-        String url = String.format("%s?lat=%.7f&lon=%.6f", apiUrl, latitude, longitude);
+        String url = String.format("%s?lat=%.7f&lon=%.7f", apiUrl, latitude, longitude);
         ResponseEntity<WeatherDetailsDto> response = restTemplate.getForEntity(url, WeatherDetailsDto.class);
 
         return response.getBody();
@@ -42,7 +46,7 @@ public class WeatherService {
 
         TimeSeriesDto eventWeather = weatherDetailsDto.getProperties().getTimeseries().stream()
                 .min(Comparator.comparing(ts -> Duration.between(eventStartTime, ts.getTime()).abs()))
-                .orElseThrow(() -> new RuntimeException("Unable to find event weather details."));
+                .orElseThrow(() -> new RuntimeException("Unable to map weather details to the event."));
 
         WeatherResponse weatherResponse = new WeatherResponse();
         weatherResponse.setTemperature(eventWeather.getData().getInstant().getDetails().getAirTemperature());
@@ -56,5 +60,6 @@ public class WeatherService {
     @Scheduled(fixedRate = 7200000)
     @CacheEvict(value = "weatherCache", allEntries = true)
     public void clearEvents() {
+        log.info("Clearing weatherCache entries");
     }
 }
