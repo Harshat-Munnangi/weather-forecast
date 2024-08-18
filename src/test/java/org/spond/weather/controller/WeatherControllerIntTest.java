@@ -42,7 +42,7 @@ public class WeatherControllerIntTest {
     @Test
     void shouldThrowErrorToFetchEventWeather() throws Exception {
         LocalDateTime eventAfterSevenDays = LocalDateTime.now().plusDays(9);
-        MvcResult result = mockMvc.perform(get("/api/weather/forecast?lat=68.92&lon=66.87&sTime="+eventAfterSevenDays.toString())
+        MvcResult result = mockMvc.perform(get("/api/weather/forecast?lat=68.92&lon=66.87&sTime="+ eventAfterSevenDays)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
