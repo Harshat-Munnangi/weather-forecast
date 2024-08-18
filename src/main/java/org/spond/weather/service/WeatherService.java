@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.spond.weather.dto.TimeSeriesDto;
 import org.spond.weather.dto.WeatherDetailsDto;
 import org.spond.weather.dto.WeatherResponse;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,6 +23,7 @@ public class WeatherService {
 
     private final RestTemplate restTemplate;
 
+    @Cacheable(value = "weatherCache", key = "#latitude + '_' + #longitude + '_' + #eventStartTime.toString()", unless = "#result == null")
     public WeatherResponse getWeatherForecast(double latitude, double longitude, LocalDateTime eventStartTime) {
 
         WeatherDetailsDto weatherDetailsDto = fetchWeatherDetails(latitude, longitude);
@@ -38,7 +42,7 @@ public class WeatherService {
 
         TimeSeriesDto eventWeather = weatherDetailsDto.getProperties().getTimeseries().stream()
                 .min(Comparator.comparing(ts -> Duration.between(eventStartTime, ts.getTime()).abs()))
-                .orElseThrow(() -> new RuntimeException("Unable to find "));
+                .orElseThrow(() -> new RuntimeException("Unable to find event weather details."));
 
         WeatherResponse weatherResponse = new WeatherResponse();
         weatherResponse.setTemperature(eventWeather.getData().getInstant().getDetails().getAirTemperature());
@@ -47,5 +51,10 @@ public class WeatherService {
         weatherResponse.setLastUpdated(weatherDetailsDto.getProperties().getMeta().getUpdatedAt());
 
         return weatherResponse;
+    }
+
+    @Scheduled(fixedRate = 7200000)
+    @CacheEvict(value = "weatherCache", allEntries = true)
+    public void clearEvents() {
     }
 }

@@ -1,5 +1,6 @@
 package org.spond.weather.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.spond.weather.dto.WeatherResponse;
 import org.spond.weather.service.WeatherService;
@@ -21,8 +22,8 @@ public class WeatherController {
 
     @GetMapping("/forecast")
     public ResponseEntity<WeatherResponse> getWeather(
-            @RequestParam("lat") double latitude,
-            @RequestParam("lon") double longitude,
+            @Valid @RequestParam("lat") double latitude,
+            @Valid @RequestParam("lon") double longitude,
             @RequestParam("sTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime eventStartTime
     ) {
         if (eventStartTime.isAfter(LocalDateTime.now()) && eventStartTime.isBefore(LocalDateTime.now().plusDays(7))) {
